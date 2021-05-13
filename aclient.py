@@ -39,17 +39,6 @@ class AClient:
 
         self._logger = logging.getLogger(self.__class__.__name__)
 
-    def _get_content(self, response, content):
-        if response.content_type == 'application/json':
-            if content:
-                return json.loads(content)
-            return {}
-        else:
-            return content
-
-    def _url_builder(self, url_end):
-        return self._url_start.rstrip('/') + '/' + url_end.lstrip('/')
-
     async def _request(self, method, url, params, headers=None):
         session_header = copy.deepcopy(self._headers)
         if headers:
@@ -66,12 +55,28 @@ class AClient:
 
             except aiohttp.ClientError as e:
                 self._logger.warning('Method: %s, url: %s, request params: %s, error: %s',
-                                     method, url, params, str(e))
+                                     method, url, params, e)
                 return {'error': str(e)}
             except Exception as e:
                 self._logger.exception('Method: %s, url: %s, request params: %s, error: %s',
-                                       method, url, params, str(e))
+                                       method, url, params, e)
                 return {'error': str(e)}
+
+    def __getattr__(self, attr):
+        if attr not in self.methods:
+            raise AttributeError('The attribute "attr" does not exist')
+        return self._add(attr)
+
+    def _get_content(self, response, content):
+        if response.content_type == 'application/json':
+            if content:
+                return json.loads(content)
+            return {}
+        else:
+            return content
+
+    def _url_builder(self, url_end):
+        return self._url_start.rstrip('/') + '/' + url_end.lstrip('/')
 
     def _add(self, method):
 
@@ -81,11 +86,6 @@ class AClient:
             self._tasks.append(self._request(method, self._url_builder(url), params, headers))
 
         return _add_task
-
-    def __getattr__(self, attr):
-        if attr not in self.methods:
-            raise AttributeError('The attribute "attr" does not exist')
-        return self._add(attr)
 
     def get_result(self):
         try:

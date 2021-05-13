@@ -31,7 +31,7 @@ class AClient:
 
         if headers:
             if not isinstance(headers, dict):
-                raise TypeError('Parameter "headers" must be a dict')
+                raise TypeError('The parameter "headers" must be a dict')
             self._headers.update(headers)
 
         self._loop = asyncio.get_event_loop()
@@ -48,6 +48,8 @@ class AClient:
             try:
                 async with getattr(session, method)(url=url, **params) as response:
                     if 200 < response.status or response.status > 299:
+                        self._logger.warning('Method: %s, url: %s, request params: %s, status: %s',
+                                             method, url, params, response.status)
                         return {'error': f'Response status {response.status}'}
 
                     content = await response.text()

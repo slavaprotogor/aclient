@@ -59,7 +59,7 @@ class AClient:
     def _url_builder(self, url_end):
         return self._url_start.rstrip('/') + '/' + url_end.lstrip('/')
 
-    async def _request(self, method, url, params, headers):
+    async def _request(self, method, url, params, headers=None):
         retry = 1
         session_header = copy.deepcopy(self._headers)
         if headers:
@@ -67,7 +67,7 @@ class AClient:
         while True:
             async with aiohttp.ClientSession(headers=session_header) as session:
                 try:
-                    async with getattr(session, method)(url=url, params=params) as response:
+                    async with getattr(session, method)(url=url, **params) as response:
                         content = await response.text()
                         self._logger.error('Content: %s', content)
                         return self._get_content(response, content)
@@ -112,9 +112,11 @@ if __name__ == '__main__':
     client.get('/include_html/page_title/')
     client.get(
         '/regions/',
-        params={'limit': 2},
+        {
+            'params': {'limit': 3},
+        },
         headers={
-            'Authorization': 'Bearer <token>',
+            'Authorization': 'Bearer 77d876f0765e8d9aec45a74b860a308203ba2a52',
         }
     )
     result = client.get_result()

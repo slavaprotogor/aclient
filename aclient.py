@@ -89,6 +89,7 @@ class AClient:
             if params is None:
                 params = {}
             self._tasks.append(self._request(method, self._url_builder(url), params, headers))
+            return self
 
         return _add_task
 
@@ -103,11 +104,15 @@ class AClient:
 
 if __name__ == '__main__':
     client = AClient('http://selfapi.s1.220-volt.ru/api/v3/')
-    client.get('/loyalty/220000387500/')
-    client.get('/cities/code/7800000000000/')
-    client.get('/cities/1/')
-    client.get('/include_html/page_title/')
     client.get(
+        '/loyalty/220000387500/'
+    ).get(
+        '/cities/code/7800000000000/'
+    ).get(
+        '/cities/1/'
+    ).get(
+        '/include_html/page_title/'
+    ).get(
         '/regions/',
         {
             'params': {'limit': 4},

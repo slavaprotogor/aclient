@@ -116,22 +116,5 @@ if __name__ == '__main__':
             'Authorization': 'Bearer <token>',
         }
     )
-    client.put(
-        '/include_html/test_name/',
-        headers={
-            'Authorization': 'Bearer <token>',
-        }
-    )
-    client.post(
-        '/delivery/shortest_terms/7800000000000/',
-        {
-            'data': {
-                'code': [8199, 556646],
-            }
-        },
-        headers={
-            'Authorization': 'Bearer <token>',
-        }
-    )
     result = client.get_result()
     print(result)

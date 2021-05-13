@@ -23,7 +23,7 @@ class AClient:
                        '(KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36')
     }
     encoding_default = 'utf-8'
-    methods = ('get', 'post')
+    methods = ('get', 'post', 'put', 'patch', 'delete')
 
     def __init__(self, url_start, headers: dict=None):
 
@@ -48,7 +48,7 @@ class AClient:
         async with aiohttp.ClientSession(headers=session_header) as session:
             try:
                 async with getattr(session, method)(url=url, **params) as response:
-                    if response.status > 299 or 200 < response.status:
+                    if response.status > 299 or 200 > response.status:
                         self._logger.warning('Method: %s, url: %s, request params: %s, status: %s',
                                              method, url, params, response.status)
                         return {'error': f'Response status {response.status}'}
@@ -102,7 +102,7 @@ class AClient:
 
 
 if __name__ == '__main__':
-    client = AClient('http://selfapi.s1.220-volt.ru/api/v3/')
+    client = AClient('http://localhost:8000/api/v3/')
     client.get('/loyalty/220000387500/')
     client.get('/cities/code/7800000000000/')
     client.get('/cities/1/')
@@ -110,7 +110,24 @@ if __name__ == '__main__':
     client.get(
         '/regions/',
         {
-            'params': {'limit': 3},
+            'params': {'limit': 4},
+        },
+        headers={
+            'Authorization': 'Bearer <token>',
+        }
+    )
+    client.put(
+        '/include_html/test_name/',
+        headers={
+            'Authorization': 'Bearer <token>',
+        }
+    )
+    client.post(
+        '/delivery/shortest_terms/7800000000000/',
+        {
+            'data': {
+                'code': [8199, 556646],
+            }
         },
         headers={
             'Authorization': 'Bearer <token>',

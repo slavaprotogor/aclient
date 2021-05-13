@@ -60,13 +60,17 @@ class AClient:
                 async with getattr(session, method)(url=url, **params) as response:
                     if 200 < response.status or response.status > 299:
                         return {'error': f'Response status {response.status}'}
+
                     content = await response.text()
                     return self._get_content(response, content)
 
             except aiohttp.ClientError as e:
-                self._logger.warning('Method: %s, url: %s, request params: %s', method, url, params)
+                self._logger.warning('Method: %s, url: %s, request params: %s, error: %s',
+                                     method, url, params, str(e))
+                return {'error': str(e)}
             except Exception as e:
-                self._logger.warning('Method: %s, url: %s, request params: %s', method, url, params)
+                self._logger.exception('Method: %s, url: %s, request params: %s, error: %s',
+                                       method, url, params, str(e))
                 return {'error': str(e)}
 
     def _add(self, method):

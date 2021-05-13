@@ -7,10 +7,6 @@ import asyncio
 import aiohttp
 
 
-DELAY = 0.1
-RETRY = 3
-
-
 class AClientError(Exception):
     pass
 
@@ -28,9 +24,6 @@ class AClient:
     }
     methods = ('get', 'post')
 
-    retry = RETRY
-    delay = DELAY
-
     def __init__(self, url_start, headers: dict=None):
 
         self._url_start = url_start
@@ -47,8 +40,6 @@ class AClient:
         self._logger = logging.getLogger(self.__class__.__name__)
 
     def _get_content(self, response, content):
-        if 200 < response.status or response.status > 299:
-            return {'error': f'Error status: {response.status}'}
         if response.content_type == 'application/json':
             if content:
                 return json.loads(content)
@@ -60,25 +51,23 @@ class AClient:
         return self._url_start.rstrip('/') + '/' + url_end.lstrip('/')
 
     async def _request(self, method, url, params, headers=None):
-        retry = 1
         session_header = copy.deepcopy(self._headers)
         if headers:
             session_header.update(headers)
-        while True:
-            async with aiohttp.ClientSession(headers=session_header) as session:
-                try:
-                    async with getattr(session, method)(url=url, **params) as response:
-                        content = await response.text()
-                        return self._get_content(response, content)
-                except aiohttp.ClientError as e:
-                    self._logger.warning('Request params: %s', params)
-                except Exception as e:
-                    self._logger.exception('Request params: %s', params)
 
-            if retry == self.retry:
-                return {}
-            retry += 1
-            await asyncio.sleep(self.delay)
+        async with aiohttp.ClientSession(headers=session_header) as session:
+            try:
+                async with getattr(session, method)(url=url, **params) as response:
+                    if 200 < response.status or response.status > 299:
+                        return {'error': f'Response status {response.status}'}
+                    content = await response.text()
+                    return self._get_content(response, content)
+
+            except aiohttp.ClientError as e:
+                self._logger.warning('Method: %s, url: %s, request params: %s', method, url, params)
+            except Exception as e:
+                self._logger.warning('Method: %s, url: %s, request params: %s', method, url, params)
+                return {'error': str(e)}
 
     def _add(self, method):
 

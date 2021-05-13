@@ -22,6 +22,7 @@ class AClient:
         'User-Agent': ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 '
                        '(KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36')
     }
+    encoding_default = 'utf-8'
     methods = ('get', 'post')
 
     def __init__(self, url_start, headers: dict=None):
@@ -51,8 +52,8 @@ class AClient:
                         self._logger.warning('Method: %s, url: %s, request params: %s, status: %s',
                                              method, url, params, response.status)
                         return {'error': f'Response status {response.status}'}
-
-                    content = await response.text()
+                    self._logger.error(response.content_type)
+                    content = await response.read()
                     return self._get_content(response, content)
 
             except aiohttp.ClientError as e:
@@ -72,8 +73,10 @@ class AClient:
     def _get_content(self, response, content):
         if response.content_type == 'application/json':
             if content:
-                return json.loads(content)
+                return json.loads(content.decode(response.charset or self.encoding_default))
             return {}
+        elif response.content_type in ('text/html', 'text/plain'):
+            return content.decode(response.charset or self.encoding_default)
         else:
             return content
 

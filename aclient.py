@@ -80,8 +80,12 @@ class AClient:
         else:
             return content
 
-    def _url_builder(self, url_end):
-        return self._url_start.rstrip('/') + '/' + url_end.lstrip('/')
+    def _url_builder(self, url_end='', url=''):
+        if url_end:
+            return self._url_start.rstrip('/') + '/' + url_end.lstrip('/')
+        if url:
+            return url
+        raise ValueError('The params "url_end" and "url" must not be empty')
 
     def _add(self, method):
 

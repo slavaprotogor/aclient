@@ -52,7 +52,7 @@ class AClient:
                         self._logger.warning('Method: %s, url: %s, request params: %s, status: %s',
                                              method, url, params, response.status)
                         return {'error': f'Response status {response.status}'}
-                    self._logger.error(response.content_type)
+
                     content = await response.read()
                     return self._get_content(response, content)
 

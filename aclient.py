@@ -48,7 +48,7 @@ class AClient:
         async with aiohttp.ClientSession(headers=session_header) as session:
             try:
                 async with getattr(session, method)(url=url, **params) as response:
-                    if response.status > 299 or 200 > response.status:
+                    if response.status > 299 or response.status < 200:
                         self._logger.warning('Method: %s, url: %s, request params: %s, status: %s',
                                              method, url, params, response.status)
                         return {'error': f'Response status {response.status}'}

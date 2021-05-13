@@ -116,7 +116,7 @@ if __name__ == '__main__':
             'params': {'limit': 3},
         },
         headers={
-            'Authorization': 'Bearer 77d876f0765e8d9aec45a74b860a308203ba2a52',
+            'Authorization': 'Bearer <token>',
         }
     )
     result = client.get_result()

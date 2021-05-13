@@ -69,7 +69,6 @@ class AClient:
                 try:
                     async with getattr(session, method)(url=url, **params) as response:
                         content = await response.text()
-                        self._logger.error('Content: %s', content)
                         return self._get_content(response, content)
                 except aiohttp.ClientError as e:
                     self._logger.warning('Request params: %s', params)

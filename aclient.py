@@ -102,7 +102,7 @@ class AClient:
 
 
 if __name__ == '__main__':
-    client = AClient('http://localhost:8000/api/v3/')
+    client = AClient('http://selfapi.s1.220-volt.ru/api/v3/')
     client.get('/loyalty/220000387500/')
     client.get('/cities/code/7800000000000/')
     client.get('/cities/1/')

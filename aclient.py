@@ -36,8 +36,19 @@ class AClient:
 
         self._loop = asyncio.get_event_loop()
         self._tasks = []
+        self._method = None
 
         self._logger = logging.getLogger(self.__class__.__name__)
+
+    def _get_content(self, response, content):
+        if response.content_type == 'application/json':
+            if content:
+                return json.loads(content.decode(response.charset or self.encoding_default))
+            return {}
+        elif response.content_type in ('text/html', 'text/plain'):
+            return content.decode(response.charset or self.encoding_default)
+        else:
+            return content
 
     async def _request(self, method, url, params, headers=None):
         session_header = copy.deepcopy(self._headers)
@@ -67,39 +78,29 @@ class AClient:
     def __getattr__(self, attr):
         if attr not in self.methods:
             raise AttributeError('The attribute "attr" does not exist')
-        return self._add(attr)
+        self._method = attr
 
-    def _get_content(self, response, content):
-        if response.content_type == 'application/json':
-            if content:
-                return json.loads(content.decode(response.charset or self.encoding_default))
-            return {}
-        elif response.content_type in ('text/html', 'text/plain'):
-            return content.decode(response.charset or self.encoding_default)
-        else:
-            return content
+        return self._add_task
 
     def _url_builder(self, url_end):
         return self._url_start.rstrip('/') + '/' + url_end.lstrip('/')
 
-    def _add(self, method):
+    def _add_task(self, url, params=None, headers=None):
+        if not isinstance(url, str):
+            raise TypeError('The param "url" must be a str')
 
-        def _add_task(url, params=None, headers=None):
-            if not isinstance(url, str):
-                raise TypeError('The param "url" must be a str')
+        if params is not None and not isinstance(params, dict):
+            raise TypeError('The param "params" must be a dict')
 
-            if params is not None and not isinstance(params, dict):
-                raise TypeError('The param "params" must be a dict')
+        if headers is not None and not isinstance(headers, dict):
+            raise TypeError('The param "headers" must be a dict')
 
-            if headers is not None and not isinstance(headers, dict):
-                raise TypeError('The param "headers" must be a dict')
+        if params is None:
+            params = {}
 
-            if params is None:
-                params = {}
-            self._tasks.append(self._request(method, self._url_builder(url), params, headers))
-            return self
+        self._tasks.append(self._request(self._method, self._url_builder(url), params, headers))
 
-        return _add_task
+        return self
 
     def get_result(self):
         try:

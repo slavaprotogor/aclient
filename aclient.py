@@ -85,15 +85,26 @@ class AClient:
     def _url_builder(self, url_end):
         return self._url_start.rstrip('/') + '/' + url_end.lstrip('/')
 
-    def _add_task(self, url, params=None, headers=None):
+    def _add_task(self, url, params=None, headers=None, token=None):
         if not isinstance(url, str):
-            raise TypeError('The param "url" must be a str')
+            raise TypeError('The arg "url" must be a str')
         if params is not None and not isinstance(params, dict):
-            raise TypeError('The param "params" must be a dict')
+            raise TypeError('The arg "params" must be a dict')
         if headers is not None and not isinstance(headers, dict):
-            raise TypeError('The param "headers" must be a dict')
+            raise TypeError('The arg "headers" must be a dict')
+        if token is not None and not isinstance(token, str):
+            raise TypeError('The arg "token" must be a str')
         if params is None:
             params = {}
+
+        if token:
+            header_token = {
+                'Authorization': f'Bearer {token}',
+            }
+            if headers is None:
+                headers = header_token
+            else:
+                headers.update(header_token)
 
         self._tasks.append(self._request(self._method, self._url_builder(url), params, headers))
         return self
@@ -122,9 +133,7 @@ if __name__ == '__main__':
         {
             'params': {'limit': 4},
         },
-        headers={
-            'Authorization': 'Bearer <token>',
-        }
+        token='<token>',
     )
     result = client.get_result()
     print(result)

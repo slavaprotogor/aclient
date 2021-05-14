@@ -85,6 +85,15 @@ class AClient:
     def _add(self, method):
 
         def _add_task(url, params=None, headers=None):
+            if not isinstance(url, str):
+                raise TypeError('The param "url" must be a str')
+
+            if params is not None and not isinstance(params, dict):
+                raise TypeError('The param "params" must be a dict')
+
+            if headers is not None and not isinstance(headers, dict):
+                raise TypeError('The param "headers" must be a dict')
+
             if params is None:
                 params = {}
             self._tasks.append(self._request(method, self._url_builder(url), params, headers))

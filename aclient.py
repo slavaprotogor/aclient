@@ -79,7 +79,10 @@ class AClient:
                                    method, url, params, e)
             return {'error': str(e)}
 
-    def __del__(self):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
     def __getattr__(self, attr):
@@ -136,28 +139,27 @@ class AClient:
             return self._loop.run_until_complete(self._session.close())
         except Exception as e:
             self._logger.exception('Error: %s', e)
+        finally:
+            print('session closed')
 
 
 if __name__ == '__main__':
 
-    client = AClient('http://selfapi.s1.220-volt.ru/api/v3/')
+    with AClient('http://selfapi.s1.220-volt.ru/api/v3/') as client:
+        result = client.get(
+            '/loyalty/220000387500/'
+        ).get(
+            '/cities/code/7800000000000/'
+        ).get(
+            '/cities/1/'
+        ).get(
+            '/include_html/page_title/'
+        ).get(
+            '/regions/',
+            {
+                'params': {'limit': 4},
+            },
+            token='<token>',
+        ).result()
 
-    result = client.get(
-        '/loyalty/220000387500/'
-    ).get(
-        '/cities/code/7800000000000/'
-    ).get(
-        '/cities/1/'
-    ).get(
-        '/include_html/page_title/'
-    ).get(
-        '/regions/',
-        {
-            'params': {'limit': 4},
-        },
-        token='<token>',
-    ).result()
-
-    print(result)
-
-    client.close()
+        print(result)

@@ -27,7 +27,7 @@ class AClient:
     def __init__(self, url_start, headers: dict=None):
 
         self._url_start = url_start
-        self._headers = self.headers_default
+        self._headers = copy.copy(self.headers_default)
 
         if headers:
             if not isinstance(headers, dict):
@@ -56,12 +56,12 @@ class AClient:
             return content
 
     async def _request(self, method, url, params, headers=None):
-        session_header = copy.deepcopy(self._headers)
+        request_headers = copy.copy(self._headers)
         if headers:
-            session_header.update(headers)
+            request_headers.update(headers)
 
         try:
-            async with getattr(self._session, method)(url=url, **params, headers=session_header) as response:
+            async with getattr(self._session, method)(url=url, **params, headers=request_headers) as response:
                 if response.status > 299 or response.status < 200:
                     self._logger.warning('Method: %s, url: %s, request params: %s, status: %s',
                                          method, url, params, response.status)

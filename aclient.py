@@ -79,6 +79,9 @@ class AClient:
                                    method, url, params, e)
             return {'error': str(e)}
 
+    def __del__(self):
+        self.close()
+
     def __getattr__(self, attr):
         if attr not in self.methods:
             raise AttributeError('The attribute "attr" does not exist')
@@ -134,6 +137,7 @@ class AClient:
         except Exception as e:
             self._logger.exception('Error: %s', e)
 
+
 if __name__ == '__main__':
 
     client = AClient('http://selfapi.s1.220-volt.ru/api/v3/')
@@ -157,4 +161,3 @@ if __name__ == '__main__':
     print(result)
 
     client.close()
-

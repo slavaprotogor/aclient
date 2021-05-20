@@ -43,7 +43,7 @@ class AClient:
 
     def _get_session(self):
         connector = aiohttp.TCPConnector(limit=None)
-        return aiohttp.ClientSession(connector=connector)
+        return aiohttp.ClientSession(connector=connector, loop=self._loop)
 
     def _get_content(self, response, content):
         if response.content_type == 'application/json':
@@ -78,6 +78,9 @@ class AClient:
             self._logger.exception('Method: %s, url: %s, request params: %s, error: %s',
                                    method, url, params, e)
             return {'error': str(e)}
+
+    def __del__(self):
+        self.close()
 
     def __getattr__(self, attr):
         if attr not in self.methods:
@@ -134,6 +137,7 @@ class AClient:
         except Exception as e:
             self._logger.exception('Error: %s', e)
 
+
 if __name__ == '__main__':
 
     client = AClient('http://selfapi.s1.220-volt.ru/api/v3/')
@@ -157,4 +161,3 @@ if __name__ == '__main__':
     print(result)
 
     client.close()
-

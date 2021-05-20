@@ -135,13 +135,26 @@ class AClient:
             self._logger.exception('Error: %s', e)
 
 if __name__ == '__main__':
-    client = AClient('http://selfapi.build.220-volt.ru/api/v3/')
-    for i in range(1000):
-        result = client.get(
-            '/base/id/next/',
-            token='<token>',
-        ).result()
-        print(result)
+
+    client = AClient('http://selfapi.s1.220-volt.ru/api/v3/')
+
+    result = client.get(
+        '/loyalty/220000387500/'
+    ).get(
+        '/cities/code/7800000000000/'
+    ).get(
+        '/cities/1/'
+    ).get(
+        '/include_html/page_title/'
+    ).get(
+        '/regions/',
+        {
+            'params': {'limit': 4},
+        },
+        token='<token>',
+    ).result()
+
+    print(result)
 
     client.close()
 

@@ -39,6 +39,10 @@ class AClient:
         self._method = None
 
         self._logger = logging.getLogger(self.__class__.__name__)
+        self._session = self._get_session()
+
+    def _get_session(self):
+        return aiohttp.ClientSession(limit=None)
 
     def _get_content(self, response, content):
         if response.content_type == 'application/json':
@@ -55,25 +59,24 @@ class AClient:
         if headers:
             session_header.update(headers)
 
-        async with aiohttp.ClientSession(headers=session_header) as session:
-            try:
-                async with getattr(session, method)(url=url, **params) as response:
-                    if response.status > 299 or response.status < 200:
-                        self._logger.warning('Method: %s, url: %s, request params: %s, status: %s',
-                                             method, url, params, response.status)
-                        return {'error': f'Response status {response.status}'}
+        try:
+            async with getattr(self._session, method)(url=url, **params, headers=session_header) as response:
+                if response.status > 299 or response.status < 200:
+                    self._logger.warning('Method: %s, url: %s, request params: %s, status: %s',
+                                         method, url, params, response.status)
+                    return {'error': f'Response status {response.status}'}
 
-                    content = await response.read()
-                    return self._get_content(response, content)
+                content = await response.read()
+                return self._get_content(response, content)
 
-            except aiohttp.ClientError as e:
-                self._logger.warning('Method: %s, url: %s, request params: %s, error: %s',
-                                     method, url, params, e)
-                return {'error': str(e)}
-            except Exception as e:
-                self._logger.exception('Method: %s, url: %s, request params: %s, error: %s',
-                                       method, url, params, e)
-                return {'error': str(e)}
+        except aiohttp.ClientError as e:
+            self._logger.warning('Method: %s, url: %s, request params: %s, error: %s',
+                                 method, url, params, e)
+            return {'error': str(e)}
+        except Exception as e:
+            self._logger.exception('Method: %s, url: %s, request params: %s, error: %s',
+                                   method, url, params, e)
+            return {'error': str(e)}
 
     def __getattr__(self, attr):
         if attr not in self.methods:
@@ -109,11 +112,16 @@ class AClient:
         self._tasks.append(self._request(self._method, self._url_builder(url), params, headers))
         return self
 
+    async def _run(self):
+        concurrent_tasks = await asyncio.gather(*self._tasks)
+
+        await self._session.close()
+
+        return concurrent_tasks
+
     def get_result(self):
         try:
-            concurrent_tasks = asyncio.gather(*self._tasks)
-            self._loop.run_until_complete(concurrent_tasks)
-            return concurrent_tasks.result()
+            return self._loop.run_until_complete(self._run())
         except Exception as e:
             self._logger.exception('Error: %s', e)
 

@@ -42,7 +42,8 @@ class AClient:
         self._session = self._get_session()
 
     def _get_session(self):
-        return aiohttp.ClientSession(limit=None)
+        connector = aiohttp.TCPConnector(limit=None)
+        return aiohttp.ClientSession(connector=connector)
 
     def _get_content(self, response, content):
         if response.content_type == 'application/json':

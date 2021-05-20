@@ -36,7 +36,7 @@ class AClient:
 
         self._loop = asyncio.get_event_loop()
         self._tasks = []
-        self._method = None
+        self._last_method = None
 
         self._logger = logging.getLogger(self.__class__.__name__)
         self._session = self._get_session()
@@ -88,7 +88,7 @@ class AClient:
     def __getattr__(self, attr):
         if attr not in self.methods:
             raise AttributeError('The attribute "attr" does not exist')
-        self._method = attr
+        self._last_method = attr
 
         return self._add_task
 
@@ -116,7 +116,7 @@ class AClient:
             else:
                 headers.update(header_token)
 
-        self._tasks.append(self._request(self._method, self._url_builder(url), params, headers))
+        self._tasks.append(self._request(self._last_method, self._url_builder(url), params, headers))
         return self
 
     def result(self):
@@ -139,8 +139,6 @@ class AClient:
             return self._loop.run_until_complete(self._session.close())
         except Exception as e:
             self._logger.exception('Error: %s', e)
-        finally:
-            print('session closed')
 
 
 if __name__ == '__main__':

@@ -42,7 +42,8 @@ class AClient:
         self._session = self._get_session()
 
     def _get_session(self):
-        return aiohttp.ClientSession(limit=None)
+        connector = aiohttp.TCPConnector(limit=None)
+        return aiohttp.ClientSession(connector=connector)
 
     def _get_content(self, response, content):
         if response.content_type == 'application/json':
@@ -112,23 +113,32 @@ class AClient:
         self._tasks.append(self._request(self._method, self._url_builder(url), params, headers))
         return self
 
-    async def _run(self):
-        concurrent_tasks = await asyncio.gather(*self._tasks)
-
-        await self._session.close()
-
-        return concurrent_tasks
-
-    def get_result(self):
+    def result(self):
         try:
-            return self._loop.run_until_complete(self._run())
+            if len(self._tasks) == 1:
+                return self._loop.run_until_complete(self._tasks[0])
+            elif len(self._tasks) > 1:
+                conurrent_tasks = asyncio.gather(*self._tasks)
+                self._loop.run_until_complete(conurrent_tasks)
+                return conurrent_tasks.result()
+            else:
+                raise ValueError('The task queue must not be empty')
+        except Exception as e:
+            self._logger.exception('Error: %s', e)
+        finally:
+            self._tasks = []
+
+    def close(self):
+        try:
+            return self._loop.run_until_complete(self._session.close())
         except Exception as e:
             self._logger.exception('Error: %s', e)
 
-
 if __name__ == '__main__':
+
     client = AClient('http://selfapi.s1.220-volt.ru/api/v3/')
-    client.get(
+
+    result = client.get(
         '/loyalty/220000387500/'
     ).get(
         '/cities/code/7800000000000/'
@@ -142,6 +152,9 @@ if __name__ == '__main__':
             'params': {'limit': 4},
         },
         token='<token>',
-    )
-    result = client.get_result()
+    ).result()
+
     print(result)
+
+    client.close()
+
